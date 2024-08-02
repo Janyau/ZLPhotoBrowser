@@ -44,7 +44,7 @@ public class ZLCameraConfiguration: NSObject {
     /// Allow recording in the camera (Need allowSelectVideo to be true). Defaults to true.
     public var allowRecordVideo: Bool {
         get {
-            pri_allowRecordVideo && ZLPhotoConfiguration.default().allowSelectVideo
+            pri_allowRecordVideo // && ZLPhotoConfiguration.default().allowSelectVideo
         }
         set {
             pri_allowRecordVideo = newValue
