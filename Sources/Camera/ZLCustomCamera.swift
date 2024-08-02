@@ -778,7 +778,11 @@ open class ZLCustomCamera: UIViewController {
             self.videoURL = nil
             try? FileManager.default.removeItem(at: videoURL)
         }
+        
+        retakeRecordTime()
     }
+    
+    func retakeRecordTime() {}
     
     @objc private func flashBtnClick() {
         flashBtn.isSelected.toggle()
@@ -1132,8 +1136,12 @@ open class ZLCustomCamera: UIViewController {
         
         let url = URL(fileURLWithPath: ZLVideoManager.getVideoExportFilePath())
         movieFileOutput.startRecording(to: url, recordingDelegate: self)
+        
+        startRecordTime()
     }
     
+    func startRecordTime() {}
+        
     private func finishRecord() {
         closeTorch()
         restartRecordAfterSwitchCamera = false
@@ -1147,7 +1155,11 @@ open class ZLCustomCamera: UIViewController {
         }
         
         movieFileOutput.stopRecording()
+        
+        finishRecordTime()
     }
+    
+    func finishRecordTime() {}
     
     private func startRecordAnimation() {
         UIView.animate(withDuration: 0.1, animations: {
