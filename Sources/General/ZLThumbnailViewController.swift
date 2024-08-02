@@ -42,6 +42,8 @@ extension ZLThumbnailViewController {
 }
 
 class ZLThumbnailViewController: UIViewController {
+    var takeDoneBlock: ((UIImage?, URL?, UIImage?, Int) -> Void)?
+    
     private var albumList: ZLAlbumListModel
     
     private var externalNavView: ZLExternalAlbumListNavView?
@@ -918,9 +920,20 @@ class ZLThumbnailViewController: UIViewController {
     private func showCamera() {
         let config = ZLPhotoConfiguration.default()
         if config.useCustomCamera {
-            let camera = ZLCustomCamera()
+            let camera = PGOCustomCameraViewCtrl()
             camera.takeDoneBlock = { [weak self] image, videoUrl in
-                self?.save(image: image, videoUrl: videoUrl)
+                guard let self else { return }
+                if let callback = self.takeDoneBlock {
+                    self.pgo_getFirstFrameAndDuration(from: videoUrl) { firstFrameImage, duration in
+                        DispatchQueue.main.async {
+                            let nav = self.navigationController as? ZLImageNavController
+                            nav?.dismiss(animated: true, completion: {
+                                callback(image, videoUrl, firstFrameImage, duration)
+                            })
+                        }
+                    }
+                }
+                self.save(image: image, videoUrl: videoUrl)
             }
             showDetailViewController(camera, sender: nil)
         } else {
@@ -1126,6 +1139,24 @@ class ZLThumbnailViewController: UIViewController {
         hiddenStatusBar = false
         if deviceIsiPad() {
             view.setNeedsLayout()
+        }
+    }
+    
+    private func pgo_getFirstFrameAndDuration(from filePath: URL?, completion: @escaping (UIImage?, Int) -> Void) {
+        guard let filePath else {
+            completion(nil, 0)
+            return
+        }
+        let asset = AVAsset(url: filePath)
+        let duration = Int(round(CMTimeGetSeconds(asset.duration)))
+        let imgGenerator = AVAssetImageGenerator(asset: asset)
+        imgGenerator.appliesPreferredTrackTransform = true
+        imgGenerator.generateCGImagesAsynchronously(forTimes: [NSValue(time: CMTime.zero)]) { requestedTime, image, actualTime, result, error in
+            if let image {
+                completion(UIImage(cgImage: image), duration)
+            } else {
+                completion(nil, 0)
+            }
         }
     }
 }
