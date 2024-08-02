@@ -135,6 +135,13 @@ public class ZLPhotoPreviewSheet: UIView {
     ///  - params2: is full image
     @objc public var selectImageBlock: (([ZLResultModel], Bool) -> Void)?
     
+    /// Success callback
+    /// block params
+    ///  - params1: photo
+    ///  - params2: video file url
+    ///  - params3: video first frame image
+    @objc public var takeDoneBlock: ((UIImage?, URL?, UIImage?, Int) -> Void)?
+    
     /// Callback for photos that failed to parse
     /// block params
     ///  - params1: failed assets.
@@ -666,10 +673,17 @@ public class ZLPhotoPreviewSheet: UIView {
     
     private func showThumbnailViewController() {
         ZLPhotoManager.getCameraRollAlbum(allowSelectImage: ZLPhotoConfiguration.default().allowSelectImage, allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo) { [weak self] cameraRoll in
-            guard let `self` = self else { return }
+            guard let self else { return }
             let nav: ZLImageNavController
             if ZLPhotoUIConfiguration.default().style == .embedAlbumList {
                 let tvc = ZLThumbnailViewController(albumList: cameraRoll)
+                tvc.takeDoneBlock = { image, videoUrl, firstFrameImage, duration in
+                    if let callback = self.takeDoneBlock {
+                        self.hide {
+                            callback(image, videoUrl, firstFrameImage, duration)
+                        }
+                    }
+                }
                 nav = self.getImageNav(rootViewController: tvc)
             } else {
                 nav = self.getImageNav(rootViewController: ZLAlbumListController())
